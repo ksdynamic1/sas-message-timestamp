@@ -13,6 +13,7 @@ build:
   script:
     - apt-get update -y
     - apt-get -y install rsync
+    - apt-get -y install zip
     - make query-deps
     - make
     - DIST_AS_EZS=yes make dist
