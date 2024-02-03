@@ -12,6 +12,7 @@ build:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   before_script: 
     - apt-get update -y
     - apt-get -y install rsync
@@ -35,6 +36,7 @@ upload:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file plugin/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez ${PACKAGE_REGISTRY_URL}/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez'
 
@@ -44,5 +46,6 @@ release:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - 'release-cli create --name "sas-message-timestamp-${CI_COMMIT_SHORT_SHA}" --tag-name $CI_COMMIT_SHORT_SHA --assets-link "{\"name\":\"sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez\", \"url\":\"${PACKAGE_REGISTRY_URL}/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez\"}"'
