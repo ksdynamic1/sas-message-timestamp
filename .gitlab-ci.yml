@@ -11,6 +11,8 @@ build:
   stage: build
   image: elixir:1.14.5-otp-25
   script:
+    - apt-get update -y
+    - apt-get -y install rsync
     - make query-deps
     - make
     - DIST_AS_EZS=yes make dist
