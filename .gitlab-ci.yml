@@ -1,0 +1,30 @@
+stages:
+ - build
+ - upload
+
+variables:
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/plugins/sas-message-timestamp"
+
+image: registry.gitlab.com/sunny-group/sas/sas-message-timestamp
+
+build:
+  stage: build
+  image: erlang:25.3
+  script:
+    - make query-deps
+    - make
+    - DIST_AS_EZS=yes make dist
+    - mkdir plugin
+    - mv plugins/rabbitmq_message_timestamp-v3.11.x.ez plugin/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}
+  cache:
+    paths:
+      - plugins
+  artifacts:
+    paths: 
+      - plugin
+
+upload:
+    stage: upload
+    image: curlimages/curl:latest
+    script:
+        - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file plugin/sas-message-timestamp-${CI_COMMIT_SHORT_SHA} ${PACKAGE_REGISTRY_URL}/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}'
