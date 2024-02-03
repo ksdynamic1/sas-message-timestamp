@@ -34,6 +34,6 @@ upload:
 
 release:
     stage: release
-    image: registry.gitlab.com/sunny-group/sas/sas-message-timestamp
+    image: registry.gitlab.com/gitlab-org/release-cli:latest
     script:
         - 'release-cli create --name "sas-message-timestamp-${CI_COMMIT_SHORT_SHA}" --tag-name $CI_COMMIT_SHORT_SHA --assets-link "{\"name\":\"sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez\", \"url\":\"${PACKAGE_REGISTRY_URL}/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez\"}"'
