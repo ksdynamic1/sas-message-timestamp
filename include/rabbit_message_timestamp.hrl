@@ -6,3 +6,4 @@
 %%
 
 -define(TIMESTAMP_IN_MS, <<"timestamp_in_ms">>).
+-define(TIMESTAMP_IN_NS, <<"timestamp_in_ns">>).

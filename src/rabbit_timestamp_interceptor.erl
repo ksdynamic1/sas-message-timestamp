@@ -40,9 +40,11 @@ intercept(#'basic.publish'{} = Method, Content, _IState) ->
     DecodedContent = rabbit_binary_parser:ensure_content_decoded(Content),
     Timestamp = os:system_time(seconds),
     TimestampMs = os:system_time(milli_seconds),
+    TimestampNs = os:system_time(nano_seconds),
     Content2 = set_content_timestamp(DecodedContent, Timestamp, OverwriteTimestamps),
     Content3 = set_content_timestamp_millis(Content2, TimestampMs, OverwriteTimestamps),
-    {Method, Content3};
+    Content4 = set_content_timestamp_nanos(Content3, TimestampNs, OverwriteTimestamps),
+    {Method, Content4};
 
 intercept(Method, Content, _VHost) ->
     {Method, Content}.
@@ -67,12 +69,25 @@ set_content_timestamp_millis(#content{properties = #'P_basic'{headers = Headers}
     case {OverwriteTimestamps, header(?TIMESTAMP_IN_MS, Headers)} of
         {true, _} ->
             %% Overwrite or set a timestamp_in_ms header
-            set_content_timestamp_header(Content, TimestampMs);
+            set_content_timestamp_millis_header(Content, TimestampMs);
         {_, undefined} ->
             %% No timestamp_in_ms header, so add one
-            set_content_timestamp_header(Content, TimestampMs);
+            set_content_timestamp_millis_header(Content, TimestampMs);
         _ ->
             %% Do not overwrite an existing timestamp_in_ms header
+            Content
+    end.
+
+set_content_timestamp_nanos(#content{properties = #'P_basic'{headers = Headers}} = Content, TimestampNs, OverwriteTimestamps) ->
+    case {OverwriteTimestamps, header(?TIMESTAMP_IN_NS, Headers)} of
+        {true, _} ->
+            %% Overwrite or set a timestamp_in_ns header
+            set_content_timestamp_nanos_header(Content, TimestampNs);
+        {_, undefined} ->
+            %% No timestamp_in_ns header, so add one
+            set_content_timestamp_nanos_header(Content, TimestampNs);
+        _ ->
+            %% Do not overwrite an existing timestamp_in_ns header
             Content
     end.
 
@@ -86,7 +101,12 @@ set_content_timestamp(#content{properties = Props0} = Content, Timestamp) ->
     Props1 = Props0#'P_basic'{timestamp = Timestamp},
     Content#content{properties = Props1, properties_bin = none}.
 
-set_content_timestamp_header(#content{properties = #'P_basic'{headers = Headers0} = Props0} = Content, TimestampMs) ->
+set_content_timestamp_millis_header(#content{properties = #'P_basic'{headers = Headers0} = Props0} = Content, TimestampMs) ->
     Headers1 = add_header(Headers0, {?TIMESTAMP_IN_MS, long, TimestampMs}),
+    Props1 = Props0#'P_basic'{headers = Headers1},
+    Content#content{properties = Props1, properties_bin = none}.
+
+set_content_timestamp_nanos_header(#content{properties = #'P_basic'{headers = Headers0} = Props0} = Content, TimestampNs) ->
+    Headers1 = add_header(Headers0, {?TIMESTAMP_IN_NS, long, TimestampNs}),
     Props1 = Props0#'P_basic'{headers = Headers1},
     Content#content{properties = Props1, properties_bin = none}.
