@@ -1,24 +1,24 @@
 stages:
  - build
  - upload
+ - release
 
 variables:
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/plugins/sas-message-timestamp"
 
-image: registry.gitlab.com/sunny-group/sas/sas-message-timestamp
-
 build:
   stage: build
   image: elixir:1.14.5-otp-25
-  script:
+  before_script: 
     - apt-get update -y
     - apt-get -y install rsync
     - apt-get -y install zip
+  script:
     - make query-deps
     - make
     - DIST_AS_EZS=yes make dist
     - mkdir plugin
-    - mv plugins/rabbitmq_message_timestamp-v3.11.x.ez plugin/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}
+    - mv plugins/rabbitmq_message_timestamp-v3.11.x.ez plugin/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez
   cache:
     paths:
       - plugins
@@ -30,4 +30,10 @@ upload:
     stage: upload
     image: curlimages/curl:latest
     script:
-        - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file plugin/sas-message-timestamp-${CI_COMMIT_SHORT_SHA} ${PACKAGE_REGISTRY_URL}/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}'
+        - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file plugin/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez ${PACKAGE_REGISTRY_URL}/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez'
+
+release:
+    stage: release
+    image: registry.gitlab.com/sunny-group/sas/sas-message-timestamp
+    script:
+        - 'release-cli create --name "sas-message-timestamp-${CI_COMMIT_SHORT_SHA}" --tag-name $CI_COMMIT_SHORT_SHA --assets-link "{\"name\":\"sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez\", \"url\":\"${PACKAGE_REGISTRY_URL}/sas-message-timestamp-${CI_COMMIT_SHORT_SHA}.ez\"}"'
